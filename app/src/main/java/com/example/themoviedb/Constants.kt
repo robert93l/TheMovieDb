@@ -5,6 +5,10 @@ class Constants {
     companion object{
         const val APIKEY = "86cbedace2010b80127773f9553cc5b6"
 
+        const val BASE_URL = "https://api.themoviedb.org/3/"
+
+
+
         const val MOVIE_BACKDROP = "extra_movie_backdrop"
         const val MOVIE_POSTER = "extra_movie_poster"
         const val MOVIE_TITLE = "extra_movie_title"

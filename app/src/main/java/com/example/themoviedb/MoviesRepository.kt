@@ -1,6 +1,7 @@
 package com.example.themoviedb
 
 
+import com.example.themoviedb.Constants.Companion.BASE_URL
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -13,7 +14,7 @@ object MoviesRepository {
 
     init {
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.themoviedb.org/3/")
+            .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
