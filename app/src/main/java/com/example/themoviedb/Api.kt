@@ -24,4 +24,10 @@ interface Api {
         @Query("api_key") apiKey: String = Constants.APIKEY,
         @Query("page") page: Int
     ): Call<GetMoviesResponse>
+
+    @GET("/movie/now_playing")
+    fun getNowPlayingtMovies(
+        @Query("api_key") apiKey: String = Constants.APIKEY,
+        @Query("page") page: Int
+    ): Call<GetMoviesResponse>
 }

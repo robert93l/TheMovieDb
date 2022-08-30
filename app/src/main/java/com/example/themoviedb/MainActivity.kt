@@ -1,11 +1,18 @@
 package com.example.themoviedb
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.themoviedb.Constants.Companion.MOVIE_BACKDROP
+import com.example.themoviedb.Constants.Companion.MOVIE_OVERVIEW
+import com.example.themoviedb.Constants.Companion.MOVIE_POSTER
+import com.example.themoviedb.Constants.Companion.MOVIE_RATING
+import com.example.themoviedb.Constants.Companion.MOVIE_RELEASE_DATE
+import com.example.themoviedb.Constants.Companion.MOVIE_TITLE
 import com.example.themoviedb.MoviesRepository.getTopRatedMovies
 
 class MainActivity : AppCompatActivity() {
@@ -22,10 +29,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var upcomingMoviesAdapter: MoviesAdapter
     private lateinit var upcomingMoviesLayoutMgr: LinearLayoutManager
 
+    private lateinit var nowPlayingMovies: RecyclerView
+    private lateinit var nowPlayingMoviesAdapter: MoviesAdapter
+    private lateinit var nowPlayingMoviesLayoutMgr: LinearLayoutManager
+
+
 
     private var popularMoviesPage = 1
     private var topRatedMoviesPage = 1
     private var upcomingMoviesPage = 1
+    private var nowPlayingMoviesPage = 1
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         popularMovies.layoutManager = popularMoviesLayoutMgr
-        popularMoviesAdapter = MoviesAdapter(mutableListOf())
+        popularMoviesAdapter = MoviesAdapter(mutableListOf()) { movie -> showMovieDetails(movie) }
         popularMovies.adapter = popularMoviesAdapter
 
         topRatedMovies = findViewById(R.id.top_rated_movies)
@@ -50,7 +64,7 @@ class MainActivity : AppCompatActivity() {
             false
         )
         topRatedMovies.layoutManager = topRatedMoviesLayoutMgr
-        topRatedMoviesAdapter = MoviesAdapter(mutableListOf())
+        topRatedMoviesAdapter = MoviesAdapter(mutableListOf()) { movie -> showMovieDetails(movie) }
         topRatedMovies.adapter = topRatedMoviesAdapter
 
         upcomingMovies = findViewById(R.id.upcoming_movies)
@@ -60,15 +74,71 @@ class MainActivity : AppCompatActivity() {
             false
         )
         upcomingMovies.layoutManager = upcomingMoviesLayoutMgr
-        upcomingMoviesAdapter = MoviesAdapter(mutableListOf())
+        upcomingMoviesAdapter = MoviesAdapter(mutableListOf()) { movie -> showMovieDetails(movie) }
         upcomingMovies.adapter = upcomingMoviesAdapter
+
+        nowPlayingMovies = findViewById(R.id.nowplaying_movies)
+        nowPlayingMoviesLayoutMgr = LinearLayoutManager(
+            this,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+
+        nowPlayingMovies.layoutManager = nowPlayingMoviesLayoutMgr
+        nowPlayingMoviesAdapter = MoviesAdapter(mutableListOf()) { movie -> showMovieDetails(movie) }
+        nowPlayingMovies.adapter = nowPlayingMoviesAdapter
+
+
 
         getPopularMovies()
         getTopRatedMovies()
         getUpcomingMovies()
+        getNowPlayingMovies()
+
 
     }
 
+    private fun showMovieDetails(movie: Movie) {
+        val intent = Intent(this, MovieDetailsActivity::class.java)
+        intent.putExtra(MOVIE_BACKDROP, movie.backdropPath)
+        intent.putExtra(MOVIE_POSTER, movie.posterPath)
+        intent.putExtra(MOVIE_TITLE, movie.title)
+        intent.putExtra(MOVIE_RATING, movie.rating)
+        intent.putExtra(MOVIE_RELEASE_DATE, movie.releaseDate)
+        intent.putExtra(MOVIE_OVERVIEW, movie.overview)
+        startActivity(intent)
+    }
+
+    private fun getNowPlayingMovies() {
+        MoviesRepository.getUpcomingMovies(
+            upcomingMoviesPage,
+            ::onNowPlayingMoviesFetched,
+            ::onError
+        )
+    }
+
+    private fun attachNowPlayingMoviesOnScrollListener() {
+        nowPlayingMovies.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val totalItemCount = nowPlayingMoviesLayoutMgr.itemCount
+                val visibleItemCount = nowPlayingMoviesLayoutMgr.childCount
+                val firstVisibleItem = nowPlayingMoviesLayoutMgr.findFirstVisibleItemPosition()
+
+                if (firstVisibleItem + visibleItemCount >= totalItemCount / 2) {
+                    nowPlayingMovies.removeOnScrollListener(this)
+                    nowPlayingMoviesPage++
+                    getUpcomingMovies()
+                }
+            }
+        })
+    }
+
+    private fun onNowPlayingMoviesFetched(movies: List<Movie>) {
+        nowPlayingMoviesAdapter.appendMovies(movies)
+        attachNowPlayingMoviesOnScrollListener()
+    }
+
+    
     private fun getUpcomingMovies() {
         MoviesRepository.getUpcomingMovies(
             upcomingMoviesPage,
